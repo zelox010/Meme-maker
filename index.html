@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Generator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .meme-generator {
+            text-align: center;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #feature-select {
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        #download-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .image-upload-area {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: box-shadow 0.5s ease-in-out;
+        }
+
+        .image-upload-area img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+
+        .image-upload-area:hover {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .meme-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 36px;
+            color: white;
+            text-shadow: 2px 2px 5px black;
+            pointer-events: none;
+        }
+
+        #top-text {
+            top: 10px;
+        }
+
+        #bottom-text {
+            bottom: 10px;
+        }
+
+        .text-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .text-input-group input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            flex-grow: 1;
+        }
+
+        .text-input-group input[type="number"],
+        .text-input-group input[type="color"] {
+            padding: 10px;
+            font-size: 16px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="meme-generator">
+        <select id="feature-select">
+            <option value="none">Select Feature</option>
+            <option value="rainbow">Rainbow Text</option>
+        </select>
+        <button id="download-button">Download</button>
+        <div id="image-upload" class="image-upload-area">
+            <img id="meme-image" src="" alt="Upload your image here">
+            <div id="top-text" class="meme-text"></div>
+            <div id="bottom-text" class="meme-text"></div>
+        </div>
+        <input type="file" id="upload-image" style="display: none;">
+
+        <div class="text-input-group">
+            <input type="text" id="top-text-input" placeholder="Top Text">
+            <input type="number" id="top-text-size" value="36" min="10" max="100">
+            <input type="color" id="top-text-color" value="#ffffff">
+        </div>
+
+        <div class="text-input-group">
+            <input type="text" id="bottom-text-input" placeholder="Bottom Text">
+            <input type="number" id="bottom-text-size" value="36" min="10" max="100">
+            <input type="color" id="bottom-text-color" value="#ffffff">
+        </div>
+    </div>
+
+    <script>
+        const featureSelect = document.getElementById('feature-select');
+        const downloadButton = document.getElementById('download-button');
+        const imageUploadArea = document.getElementById('image-upload');
+        const memeImage = document.getElementById('meme-image');
+        const topText = document.getElementById('top-text');
+        const bottomText = document.getElementById('bottom-text');
+        const topTextInput = document.getElementById('top-text-input');
+        const bottomTextInput = document.getElementById('bottom-text-input');
+        const topTextSize = document.getElementById('top-text-size');
+        const bottomTextSize = document.getElementById('bottom-text-size');
+        const topTextColor = document.getElementById('top-text-color');
+        const bottomTextColor = document.getElementById('bottom-text-color');
+        const uploadImage = document.getElementById('upload-image');
+        let rainbowEffect = false;
+        let animationFrame;
+
+        // Handle image upload
+        imageUploadArea.addEventListener('click', () => {
+            uploadImage.click();
+        });
+
+        uploadImage.addEventListener('change', (event) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                memeImage.src = e.target.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        // Update text on the meme
+        function updateMemeText() {
+            topText.textContent = topTextInput.value;
+            bottomText.textContent = bottomTextInput.value;
+
+            topText.style.fontSize = `${topTextSize.value}px`;
+            bottomText.style.fontSize = `${bottomTextSize.value}px`;
+
+            topText.style.color = topTextColor.value;
+            bottomText.style.color = bottomTextColor.value;
+
+            if (rainbowEffect) {
+                applyRainbowEffect(topText, bottomText);
+            } else {
+                cancelAnimationFrame(animationFrame); // Stop any ongoing animations
+                topText.style.color = topTextColor.value;
+                bottomText.style.color = bottomTextColor.value;
+            }
+        }
+
+        topTextInput.addEventListener('input', updateMemeText);
+        bottomTextInput.addEventListener('input', updateMemeText);
+        topTextSize.addEventListener('input', updateMemeText);
+        bottomTextSize.addEventListener('input', updateMemeText);
+        topTextColor.addEventListener('input', updateMemeText);
+        bottomTextColor.addEventListener('input', updateMemeText);
+
+        // Feature selection
+        featureSelect.addEventListener('change', (event) => {
+            rainbowEffect = event.target.value === 'rainbow';
+            updateMemeText();
+        });
+
+        // Apply rainbow effect to text
+        function applyRainbowEffect(...texts) {
+            let hue = 0;
+            function animate() {
+                texts.forEach((text) => {
+                    text.style.color = `hsl(${hue}, 100%, 50%)`;
+                });
+                hue = (hue + 1) % 360;
+                animationFrame = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Handle meme download
+        downloadButton.addEventListener('click', () => {
+            if (rainbowEffect) {
+                downloadMemeAsVideo();
+            } else {
+                downloadMemeAsImage();
+            }
+        });
+
+        // Download the meme as an image
+        function downloadMemeAsImage() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = memeImage.naturalWidth;
+            canvas.height = memeImage.naturalHeight;
+
+            context.drawImage(memeImage, 0, 0, canvas.width, canvas.height);
+
+            context.font = `${topTextSize.value}px Impact`;
+            context.textAlign = 'center';
+            context.strokeStyle = 'black';
+            context.lineWidth = 2;
+
+            context.fillStyle = topText.style.color;
+            context.fillText(topText.textContent, canvas.width / 2, 50);
+            context.strokeText(topText.textContent, canvas.width / 2, 50);
+
+            context.fillStyle = bottomText.style.color;
+            context.fillText(bottomText.textContent, canvas.width / 2, canvas.height - 20);
+            context.strokeText(bottomText.textContent, canvas.width / 2, canvas.height - 20);
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'meme.png';
+            link.click();
+        }
+
+        // Download the meme as a video
+        function downloadMemeAsVideo() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const stream = canvas.captureStream(30); // 30 fps
+            const recorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'meme.webm';
+                link.click();
+            };
+
+            canvas.width = memeImage.naturalWidth;
+            canvas.height = memeImage.naturalHeight;
+
+            function draw() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(memeImage, 0, 0, canvas.width, canvas.height);
+
+                context.font = `${topTextSize.value}px Impact`;
+                context.textAlign = 'center';
+                context.strokeStyle = 'black';
+                context.lineWidth = 2;
+
+                context.fillStyle = topText.style.color;
+                context.fillText(topText.textContent, canvas.width / 2, 50);
+                context.strokeText(topText.textContent, canvas.width / 2, 50);
+
+                context.fillStyle = bottomText.style.color;
+                context.fillText(bottomText.textContent, canvas.width / 2, canvas.height - 20);
+                context.strokeText(bottomText.textContent, canvas.width / 2, canvas.height - 20);
+
+                if (rainbowEffect) {
+                    // Apply rainbow effect
+                    let hue = (Date.now() / 10) % 360;
+                    topText.style.color = `hsl(${hue}, 100%, 50%)`;
+                    bottomText.style.color = `hsl(${hue}, 100%, 50%)`;
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            recorder.start();
+            draw();
+
+            setTimeout(() => {
+                recorder.stop();
+            }, 5000); // Adjust duration as needed
+        }
+    </script>
+</body>
+  </html>
